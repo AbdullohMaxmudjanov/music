@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musiqa Player</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center; 
+      font-family: sans-serif;
+      height: 100vh;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .box {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #ff00cc, #3333ff);
+      border-radius: 20px;
+      animation: moveBox 3s infinite ease-in-out;
+      box-shadow: 0 0 20px #ff00cc, 0 0 40px #3333ff;
+      margin-bottom: 20px;
+    }
+
+    @keyframes moveBox {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-150px) rotate(180deg); }
+      100% { transform: translateY(0) rotate(360deg); }
+    }
+
+    .player {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background: #3333ff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    button:hover {
+      background: #5555ff;
+    }
+
+    .progress {
+      width: 100%;
+      height: 8px;
+      background: #444;
+      margin-top: 15px;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #00ccff;
+    }
+
+    .time, .song-title {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    .playlist {
+      margin-top: 20px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 10px;
+      background: #222;
+    }
+
+    .playlist-item {
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .playlist-item:hover {
+      background: #3333ff;
+    }
+
+    @media (max-width: 480px) {
+      .box {
+        width: 70px;
+        height: 70px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+
+      .playlist {
+        max-height: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box"></div>
+
+  <div class="player">
+    <div class="song-title" id="songTitle">Qo'shiq nomi</div>
+
+    <div class="controls">
+      <button onclick="prevSong()">⏮️</button>
+      <button onclick="togglePlay()" id="playPauseBtn">▶️</button>
+      <button onclick="nextSong()">⏭️</button>
+      <button onclick="changeMode()" id="modeBtn">🔁</button>
+    </div>
+
+    <div class="progress" onclick="seek(event)">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="time" id="time">0:00 / 0:00</div>
+
+    <div class="playlist" id="playlist"></div>
+  </div>
+
+  <script>
+    const playlist = [
+    "2_5291767014275174855.mp3",
+    "Alisher_Bayniyazov_Sevinch Ismoilova_-_Hayrana_juldizlarnet(1).mp3",
+    "Azoda - Ona sizni baxtli qilaman.mp3",
+    "BIR_DO_STIM_BOR_ESLATADI_BOLALIKNI_Osman_Navruzov.hd.mp3",
+    "Chicco - Шахзода.m4a",
+    "dilnoz - saharlarda_(uzxit.net).mp3",
+    "dilnoza_hakimova_shirin_zaitova_va_aziza_nizamova_illo_muzzonas.mp3",
+    "Doxxim - Chiroyligim Gulim (www.Moqina.net).mp3",
+    "dPesz3fGeNQ.mp3",
+    "HAMDAM JAMSHID -YOMG'IRLAR.mp3",
+    "HAMISHA BAHOR(1).m4a",
+    "ifmUzf0_1DI.mp3",
+    "Jadidlarim _ @Uzmusiqam.mp3",
+    "Jambul_Muhammedov_Madam_Жамбул_Мухаммедов_МадамMP3_320K.mp3",
+    "Jasurbek_Jabborov_va_Dilnoza_Akbarova_Azizim_Жасурбек_в_L2V47IqlXFY.mp3",
+    "LA HABIBI MUSH BANAM.mp3",
+    "Malika_Ravshanova_Dadajon_Малика_Равшанова_Дадажон_music.mp3",
+    "Mirjalol Nematov - Ay Yay Yay.mp3",
+    "Mirjalol Nematov - Endi Manga Gitara.mp3",
+    "Mirjalol Nematov - Shahzoda Diyora(1).mp3",
+    "ou0phHbzz-0.mp3",
+    "Spice, Sean Paul, Shaggy - Go Down Deh (Remix).mp3",
+    "tExc5EOZ1DY.mp3",
+    "ULUG'BEK RAHMATULLAYEV - PARI.mp3",
+    "Uzmir feat. Mira - Onasi.mp3",
+    "VIA Marokand va Ziyoda - Qo'shnilar.mp3",
+    "via-marokand-sevib-qoldim_(muzzonas.ru).mp3",
+    "vvwt3wkjqlgizw8ys4o6.m4a",
+    "vvwt3wkjqlgizw8ys4o6(1).m4a",
+    "Ziyoda_Tor_ko_cha_Зиёда_Тор_куча_AUDIO_R8ixp0H5ofA_140.mp3",
+    
+    ];
+
+    let currentSong = 0;
+    let modes = ["all", "one", "repeatAll"];
+    let modeIndex = 0;
+    let mode = modes[modeIndex];
+    const audio = new Audio(playlist[currentSong]);
+    audio.loop = false;
+
+    function updateSongTitle() {
+      document.getElementById("songTitle").textContent = playlist[currentSong];
+    }
+
+    function loadPlaylist() {
+      const list = document.getElementById("playlist");
+      list.innerHTML = "";
+      playlist.forEach((song, index) => {
+        const item = document.createElement("div");
+        item.className = "playlist-item";
+        item.textContent = song;
+        item.onclick = () => {
+          playSong(index);
+        };
+        list.appendChild(item);
+      });
+    }
+
+    function playSong(index) {
+      currentSong = index;
+      audio.src = playlist[currentSong];
+      audio.play();
+      updateSongTitle();
+      updatePlayPauseIcon();
+    }
+
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    }
+
+    function updatePlayPauseIcon() {
+      const btn = document.getElementById("playPauseBtn");
+      if (audio.paused) {
+        btn.textContent = "▶️";
+      } else {
+        btn.textContent = "⏸️";
+      }
+    }
+
+    function nextSong() {
+      if (mode === "one") {
+        playSong(currentSong);
+      } else if (mode === "all") {
+        if (currentSong < playlist.length - 1) {
+          playSong(currentSong + 1);
+        }
+      } else if (mode === "repeatAll") {
+        playSong((currentSong + 1) % playlist.length);
+      }
+    }
+1
+    function prevSong() {
+      if (mode === "one") {
+        playSong(currentSong);
+      } else if (mode === "all") {
+        if (currentSong > 0) {
+          playSong(currentSong - 1);
+        }
+      } else if (mode === "repeatAll") {
+        playSong((currentSong - 1 + playlist.length) % playlist.length);
+      }
+    }
+
+    function changeMode() {
+      modeIndex = (modeIndex + 1) % modes.length;
+      mode = modes[modeIndex];
+
+      const btn = document.getElementById("modeBtn");
+      if (mode === "all") {
+        btn.textContent = "🔁";
+      } else if (mode === "one") {
+        btn.textContent = "🔂";
+      } else if (mode === "repeatAll") {
+        btn.textContent = "🔄";
+      }
+    }
+
+    audio.addEventListener('ended', function() {
+      nextSong();
+    });
+
+    audio.addEventListener('timeupdate', function() {
+      const progressBar = document.getElementById('progressBar');
+      const timeDisplay = document.getElementById('time');
+      const current = formatTime(audio.currentTime);
+      const total = formatTime(audio.duration);
+      timeDisplay.textContent = `${current} / ${total}`;
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = percent + "%";
+    });
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return "0:00";
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function seek(event) {
+      const progress = document.querySelector('.progress');
+      const percent = event.offsetX / progress.clientWidth;
+      audio.currentTime = percent * audio.duration;
+    }
+
+    // Play va Pause holatini kuzatish
+    audio.addEventListener('play', updatePlayPauseIcon);
+    audio.addEventListener('pause', updatePlayPauseIcon);
+
+    // Boshlanishda yuklash
+    updateSongTitle();
+    loadPlaylist();
+    audio.load();
+    updatePlayPauseIcon();
+  </script>
+
+</body>
+</html>
